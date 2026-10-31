@@ -51,14 +51,14 @@ def _incident_id(raw):
     return "INC-" + hashlib.sha1(blob).hexdigest()[:6].upper()
 
 
-def diagnose(raw, incident_id=None, crash_agents=(), narrator=None, field_mapper=None):
+def diagnose(raw, incident_id=None, crash_agents=(), narrator=None, field_mapper=None, follow_up=True):
     """Run the full multi-agent diagnosis. -> dict with report, markdown, messages, telemetry."""
     started = time.perf_counter()
     incident_id = incident_id or _incident_id(raw)
     bus = MessageBus(incident_id)
     ingestion = IngestionAgent(raw, field_mapper=field_mapper)
     specialists = [cls() for cls in SPECIALISTS]
-    correlation = CorrelationAgent([a.name for a in specialists])
+    correlation = CorrelationAgent([a.name for a in specialists], follow_up=follow_up)
     reporting = ReportingAgent(narrator=narrator)
     for agent in [ingestion, *specialists, correlation, reporting]:
         bus.register(_Crashing(agent) if agent.name in crash_agents else agent)

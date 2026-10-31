@@ -29,16 +29,26 @@ class PerformanceAgent(AnalysisAgent):
         ys = self.series(device, y)
         if not ys:
             return None, None, [], f"{device}: no {y} time series to correlate"
-        # load on this device or anywhere on its path upstream can explain its delay
+        if knowledge.assess(y, max(v for _, v in ys))[0] == "normal":
+            return None, None, [], f"{y} on {device} is normal, so there is no delay to explain"
+        # load on this device or anywhere on its path upstream can explain its delay,
+        # but only a device that is actually loaded (testing every quiet device would
+        # find chance correlations)
         path, d = [device], self.upstream_of(device)
         while d and d not in path and len(path) < 16:
             path.append(d)
             d = self.upstream_of(d)
+        loaded = [p for p in path if self.series(p, x)
+                  and knowledge.assess(x, max(v for _, v in self.series(p, x)))[0] != "normal"]
+        measured = [p for p in path if self.series(p, x)]
+        if measured and not loaded:
+            peak = max(v for p in measured for _, v in self.series(p, x))
+            return "path_latency", "link_congestion", [], (
+                f"{y} on {device} is high but no device on its path is heavily loaded (peak {x} {peak:.0f}% "
+                f"across {len(measured)} device(s)): the delay is not caused by local load")
         best, most = None, 0
-        for xdev in path:
+        for xdev in loaded:
             xs = self.series(xdev, x)
-            if not xs:
-                continue
             xmap = dict(xs)
             pairs = [(xmap[t], v) for t, v in ys if t in xmap]
             most = max(most, len(pairs))
@@ -264,7 +274,8 @@ class ConnectivityAgent(AnalysisAgent):
         seg = topo.get(d, {}).get("segment")
         peers = [x for x, info in topo.items() if x != d and x in self.telemetry["devices"]
                  and info.get("medium") == "wired" and info.get("type") not in ("service",)
-                 and ((up and info.get("upstream") == up) or (seg and info.get("segment") == seg) or x == up)]
+                 and x != up    # the shared upstream is what we are testing, not a neighbour
+                 and ((up and info.get("upstream") == up) or (seg and info.get("segment") == seg))]
         if not topo or not peers:
             return None, None, [], f"no wired neighbours of {d} with telemetry to compare against"
         wired_bad = [x for x in peers if x in bad]

@@ -38,8 +38,15 @@ class AnalysisAgent(Agent):
         detail = knowledge.interpret(metric, sev)
         if info.get("samples", 1) > 1:
             detail += f" (median of {info['samples']} samples, worst {info['worst']})"
-        return {"metric": metric, "value": info["value"], "unit": info["unit"], "device_id": device_id,
-                "threshold": thr, "interpretation": detail, "severity": sev, "source": self.name}
+        ev = {"metric": metric, "value": info["value"], "unit": info["unit"], "device_id": device_id,
+              "threshold": thr, "interpretation": detail, "severity": sev, "source": self.name}
+        if info.get("samples", 1) > 1:
+            ev["worst"] = info["worst"]
+            if sev == "normal" and knowledge.assess(metric, info["worst"])[0] != "normal":
+                ev["severity"] = "warning"   # a peak past the threshold is worth a warning
+                ev["interpretation"] = (f"{knowledge.interpret(metric, 'warning')}: peaked at {info['worst']} "
+                                        f"(median {info['value']} of {info['samples']} samples)")
+        return ev
 
     def observations(self):
         out = []

@@ -31,7 +31,11 @@ def strength(ev):
         n = float(v or 0)
         return 0.0 if n <= 0 else 0.6 if n < 2 else min(1.0, 0.85 + 0.05 * n)
     try:
-        return knowledge.assess(m, float(v))[1]
+        s = knowledge.assess(m, float(v))[1]
+        if ev.get("worst") is not None:
+            # a peak past the threshold counts, a little less than a sustained level
+            s = max(s, 0.85 * knowledge.assess(m, float(ev["worst"]))[1])
+        return round(s, 3)
     except (TypeError, ValueError):
         return 0.0
 

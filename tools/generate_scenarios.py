@@ -244,6 +244,52 @@ def interop_messy():
     }
 
 
+# --------------------------------------------------------------------------
+# deliberately ambiguous cases: readings alone sit near the thresholds, so the
+# answer depends on time-series and scope evidence (used by tools/ablation.py)
+# --------------------------------------------------------------------------
+
+def amb_congestion_switch(i, m):
+    m["link_utilization_pct"] = ramp(70, 88, i)        # warning only, never critical
+    m["queue_drops"] = int(ramp(15, 60, i))            # mostly below warning
+    m["latency_ms"] = ramp(20, 90, i)
+
+
+def amb_congestion_victim(i, m):
+    m["latency_ms"] = ramp(30, 280, i)                 # delay rises with the switch's load
+    m["jitter_ms"] = ramp(6, 55, i)
+
+
+def amb_wan_gateway(i, m):
+    m["link_utilization_pct"] = u(80, 87)              # warning-level load, but flat
+    m["latency_ms"] = u(150, 360)                      # delay jumps around independently of load
+    m["jitter_ms"] = u(35, 70)
+    m["queue_drops"] = random.randint(20, 55)
+
+
+def amb_wifi_ap(i, m):
+    m["rssi_dbm"] = u(-72, -68, 1)                     # borderline signal
+    m["retransmission_pct"] = u(11, 15)
+    m["latency_ms"] = u(120, 220)
+    m["jitter_ms"] = u(30, 50)
+
+
+def amb_wifi_switch(i, m):
+    m["link_utilization_pct"] = u(81, 87)              # busy uplink, but wired PC stays fine
+    m["queue_drops"] = random.randint(40, 70)
+
+
+def ambiguous_sets():
+    hostel = ["HOSTEL_AP_01", "HOSTEL_AP_02", "HOSTEL_PC_01"]
+    return {
+        "ambiguous_congestion": (batch("amb_c", {"HOSTEL_SW_01": amb_congestion_switch,
+                                                 **{d: amb_congestion_victim for d in hostel}}), "link_congestion"),
+        "ambiguous_wan": (batch("amb_w", {"INTERNET_GW": amb_wan_gateway,
+                                          **{d: wan_downstream for d in ("CAMPUS_CORE_01", "DEPT_PC_01")}}), "path_latency"),
+        "ambiguous_wifi": (batch("amb_f", {"HOSTEL_AP_02": amb_wifi_ap, "HOSTEL_SW_01": amb_wifi_switch}), "weak_wifi_signal"),
+    }
+
+
 def main(seed=7):
     random.seed(seed)
     OUT.mkdir(parents=True, exist_ok=True)

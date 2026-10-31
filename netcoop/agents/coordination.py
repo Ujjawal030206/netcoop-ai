@@ -42,9 +42,10 @@ class CorrelationAgent(Agent):
     name = "correlation_agent"
     role = "fault_correlation"
 
-    def __init__(self, expected_agents):
+    def __init__(self, expected_agents, follow_up=True):
         super().__init__()
         self.expected = list(expected_agents)
+        self.follow_up = follow_up  # False only for the ablation experiment
         self.findings = {}
         self.telemetry = None
 
@@ -120,7 +121,7 @@ class CorrelationAgent(Agent):
         dialogue, conflicts = [], []
         order = sorted(ranked, key=lambda c: -ranked[c]["score"])
 
-        if order:
+        if order and self.follow_up:
             top = order[0]
             to_check = [top]
             if len(order) > 1 and ranked[order[1]]["score"] >= ranked[top]["score"] - 0.3:
