@@ -96,6 +96,16 @@
     "cause": null,
     "description": "insufficient data"
   },
+  "ambiguous_congestion.json": {
+    "status": "diagnosed",
+    "cause": "link_congestion",
+    "description": "Access switch load stays just under the warning line but peaks past it; the APs and PC below it slow down in step with that load. Readings alone are near the thresholds: switch follow-up questions off to compare."
+  },
+  "ambiguous_wifi.json": {
+    "status": "diagnosed",
+    "cause": "weak_wifi_signal",
+    "description": "Borderline AP signal and a busy uplink; the wired PC on the same switch stays fast. Readings alone are near the thresholds: switch follow-up questions off to compare."
+  },
   "malformed_json.txt": {
     "status": "error",
     "cause": null,

@@ -364,6 +364,19 @@ def main(seed=7):
                                    "metrics": {"connected_clients": 18}}]},
                               {"status": "insufficient_evidence", "cause": None}),
     }
+    random.seed(seed + 1000)
+    for name, (data, want) in ambiguous_sets().items():
+        if name == "ambiguous_wan":
+            # the known weak case (~70% in tools/ablation.py); measured there, not bundled as a pass/fail file
+            continue
+        data["incident_id"] = f"INC-{name.upper().replace('_', '-')}"
+        data["description"] = {
+            "ambiguous_congestion": "Access switch load stays just under the warning line but peaks past it; the APs "
+                                    "and PC below it slow down in step with that load.",
+            "ambiguous_wan": "Gateway is moderately busy, but its delay jumps around independently of the load.",
+            "ambiguous_wifi": "Borderline AP signal and a busy uplink; the wired PC on the same switch stays fast.",
+        }[name] + " Readings alone are near the thresholds: switch follow-up questions off to compare."
+        scenarios[name] = (data, {"status": "diagnosed", "cause": want})
     manifest = {}
     for name, (data, expect) in scenarios.items():
         (OUT / f"{name}.json").write_text(json.dumps(data, indent=2), encoding="utf-8")

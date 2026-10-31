@@ -22,10 +22,10 @@ Confidence: 0.82 (high)
 
 | Check | Result |
 |---|---|
-| Bundled scenarios (`python tools/run_scenarios.py`) | **19 / 19** |
+| Bundled scenarios (`python tools/run_scenarios.py`) | **21 / 21** |
 | Every campus scenario regenerated with 30 random seeds (`python tools/stress_test.py`) | **330 / 330** |
 | Random records from the reference telemetry generator, 100 per type | **300 / 300** |
-| Unit, integration and API tests (`pytest`) | **70 passing** |
+| Unit, integration, API and dashboard tests (`pytest`) | **95 passing** |
 | Time per diagnosis | ~10–40 ms on a laptop, fully offline |
 
 ### Does collaboration actually help? (ablation, `python tools/ablation.py`)
@@ -50,7 +50,8 @@ The diagnosis is deterministic: the same input always gives the same answer. No 
 
 ```bash
 pip install -r requirements.txt
-python server.py                     # dashboard at http://127.0.0.1:8000
+streamlit run streamlit_app.py       # Streamlit dashboard at http://localhost:8501
+python server.py                     # or the FastAPI dashboard + REST API at http://127.0.0.1:8000
 ```
 
 ```bash
@@ -63,7 +64,7 @@ python -m netcoop scenarios                                               # run 
 pytest -q
 ```
 
-Python 3.10+. Dependencies: FastAPI + Uvicorn (dashboard), jsonschema (protocol validation), pytest; `openai` and `python-dotenv` only for the optional LLM summary.
+Python 3.10+. Dependencies: jsonschema (protocol validation), Streamlit + pandas and FastAPI + Uvicorn (dashboards), pytest; `openai` and `python-dotenv` only for the optional LLM summary.
 
 ## Architecture
 
@@ -310,15 +311,19 @@ Every run produces a JSON report in the required structure (`incident_id`, `stat
 | `monitoring_gap.json` | department switch silent, everything below it healthy | healthy, "restore monitoring" action, lower confidence |
 | `no_topology.json` | hostel congestion with the topology removed | `link_congestion`, low confidence, scope stated as unknown |
 | `conflicting_wifi_vs_congestion.json` | borderline AP signal vs a saturated access switch | `link_congestion` after follow-up questions |
+| `ambiguous_congestion.json` | switch load just under the warning line but peaking past it; devices below slow down in step | `link_congestion` (confidence 0.47 → 0.62 with follow-up questions) |
+| `ambiguous_wifi.json` | borderline AP signal and a busy uplink, wired PC on the same switch fast | `weak_wifi_signal` with follow-up questions; `link_congestion` (wrong) without |
 | `interop_legacy_mixed.json` | legacy dialect (camelCase, seconds, fractions, epoch times, unit strings), a record without id, an out-of-range value, one valid legacy 0.9 agent message, one malformed message | `link_congestion`, 1 message rejected |
 | `organiser_normal.json`, `organiser_latency_spike.json`, `organiser_hardware_failure.json` | single records in the reference generator format | healthy, `path_latency`, `hardware_failure` |
 | `organiser_stream.ndjson` | 5 reference-format samples with one corrupt line | `hardware_failure` |
 | `insufficient_data.json` | two sparse records | `insufficient_evidence` |
 | `malformed_json.txt` | broken JSON | clear `error` report |
 
-## Dashboard and API
+## Dashboards and API
 
-`python server.py` serves a dashboard with no external assets (works offline): scenario picker, paste/upload your own telemetry, network map coloured by health with the root cause outlined, an animated diagram of the agents exchanging messages, the full conversation with every message's JSON, evidence with trend sparklines, follow-up questions and conflicts, the confidence calculation with real numbers, the data-translation log, and the JSON report. A switch simulates an agent crash.
+**Streamlit** (`streamlit run streamlit_app.py`): one page with four panes, the network map (health colours, root cause outlined in blue), the agent conversation (every netcoop-msg/1.0 message, QUERY/RESPONSE highlighted, a filter to show only the follow-up questions, raw JSON), evidence and reasoning (evidence table, follow-up answers, conflicts, counterfactual, the confidence calculation with real numbers, alternatives, actions, early warnings, limitations) and the translation log (field and unit translations, validation issues, rejected messages). The sidebar picks a scenario or takes pasted / uploaded telemetry, simulates an agent crash, and has a switch that **turns the follow-up questions off**: on `ambiguous_wifi.json` the diagnosis flips from the correct weak Wi-Fi signal to congestion, which is the ablation result live. `tests/test_streamlit.py` drives the page headlessly for every scenario.
+
+**FastAPI** (`python server.py`) serves the same engine as a dashboard with no external assets (works offline): scenario picker, paste/upload your own telemetry, network map coloured by health with the root cause outlined, an animated diagram of the agents exchanging messages, the full conversation with every message's JSON, evidence with trend sparklines, follow-up questions and conflicts, the confidence calculation with real numbers, the data-translation log, and the JSON report. A switch simulates an agent crash.
 
 | Endpoint | |
 |---|---|
@@ -359,7 +364,8 @@ data/scenarios/     sample inputs + manifest.json
 tools/              generate_scenarios.py, run_scenarios.py, stress_test.py, ablation.py,
                     build_protocol_doc.py
 static/             dashboard
-server.py           FastAPI app
+streamlit_app.py    Streamlit dashboard
+server.py           FastAPI app + REST API
 tests/              pytest suite
 docs/PROTOCOL.md    message and field reference
 ```
