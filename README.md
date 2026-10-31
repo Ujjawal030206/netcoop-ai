@@ -9,13 +9,13 @@ python -m netcoop diagnose data/scenarios/conflicting_wifi_vs_congestion.json --
 ```
 
 ```
-QUERY     correlation_agent -> performance_agent   correlate_metrics: check 'link_congestion' on HOSTEL_SW_01
-RESPONSE  performance_agent -> correlation_agent   latency on HOSTEL_SW_01 tracks utilisation on its own link (r=1.00, n=6)
-QUERY     correlation_agent -> connectivity_agent  scope_check: check 'weak_wifi_signal' on HOSTEL_AP_01
-RESPONSE  connectivity_agent -> correlation_agent  wired neighbours are degraded too: the fault is upstream of the access point
+QUERY     correlation_agent -> performance_agent   correlate_metrics: check 'link_congestion' on HOSTEL_SW_01 (score 0.88)
+RESPONSE  performance_agent -> correlation_agent   latency on HOSTEL_SW_01 tracks utilisation on its own link (r=1.00, n=6): delay rises with load, the signature of congestion
+QUERY     correlation_agent -> connectivity_agent  scope_check: check 'weak_wifi_signal' on HOSTEL_AP_01 (score 0.61)
+RESPONSE  connectivity_agent -> correlation_agent  wired neighbours are degraded too (HOSTEL_PC_01): the fault is upstream of the access point, not the Wi-Fi signal
 
 Root cause: Likely link congestion causing egress queue drops at HOSTEL_SW_01
-Confidence: 0.80 (high)
+Confidence: 0.82 (high)
 ```
 
 ## Results
