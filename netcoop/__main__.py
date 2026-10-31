@@ -99,6 +99,11 @@ def cmd_scenarios(_args):
 
 
 def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):   # Windows consoles default to cp1252
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
     ap = argparse.ArgumentParser(prog="netcoop", description="NetCoop AI: multi-agent network fault diagnosis")
     sub = ap.add_subparsers(dest="cmd", required=True)
     d = sub.add_parser("diagnose", help="diagnose a telemetry file (JSON, NDJSON or CSV; '-' for stdin)")

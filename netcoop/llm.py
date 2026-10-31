@@ -7,7 +7,7 @@ facts; the root cause, confidence and evidence are decided by the agents.
 Configure in .env (any OpenAI-compatible endpoint):
     LLM_API_KEY=...            (or GROQ_API_KEY)
     LLM_BASE_URL=https://api.groq.com/openai/v1
-    LLM_MODEL=llama-3.3-70b-versatile
+    LLM_MODEL=openai/gpt-oss-20b
 """
 
 import json
@@ -31,7 +31,7 @@ def _client():
         return None, None
     from openai import OpenAI
     base = os.environ.get("LLM_BASE_URL") or "https://api.groq.com/openai/v1"
-    model = os.environ.get("LLM_MODEL") or "llama-3.3-70b-versatile"
+    model = os.environ.get("LLM_MODEL") or "openai/gpt-oss-20b"
     return OpenAI(api_key=key, base_url=base, timeout=20), model
 
 
@@ -46,9 +46,12 @@ def narrator():
                                            "recommended_actions", "limitations")}
         try:
             resp = client.chat.completions.create(
-                model=model, temperature=0.2, max_tokens=220,
+                model=model, temperature=0.2, max_tokens=900,
                 messages=[{"role": "user", "content": PROMPT + json.dumps(keep, default=str)}])
-            return (resp.choices[0].message.content or "").strip() or None
+            text = resp.choices[0].message.content or ""
+            # models like to emit narrow / non-breaking spaces that old consoles cannot print
+            text = " ".join(text.replace(" ", " ").replace(" ", " ").split())
+            return text or None
         except Exception:
             return None   # the deterministic summary is always there as fallback
 
