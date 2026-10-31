@@ -1,0 +1,21 @@
+{
+  "_comment": "Warning / critical thresholds per canonical metric. direction=high: larger is worse; low: smaller is worse. Edit to tune for a different network.",
+  "latency_ms":                {"warning": 100,  "critical": 250,  "direction": "high"},
+  "jitter_ms":                 {"warning": 30,   "critical": 60,   "direction": "high"},
+  "packet_loss_pct":           {"warning": 1,    "critical": 5,    "direction": "high"},
+  "link_utilization_pct":      {"warning": 80,   "critical": 90,   "direction": "high"},
+  "cpu_utilization_pct":       {"warning": 80,   "critical": 95,   "direction": "high"},
+  "memory_utilization_pct":    {"warning": 85,   "critical": 95,   "direction": "high"},
+  "queue_drops":               {"warning": 50,   "critical": 150,  "direction": "high"},
+  "interface_errors":          {"warning": 10,   "critical": 100,  "direction": "high"},
+  "crc_errors":                {"warning": 5,    "critical": 50,   "direction": "high"},
+  "link_flaps":                {"warning": 1,    "critical": 3,    "direction": "high"},
+  "temperature_c":             {"warning": 65,   "critical": 80,   "direction": "high"},
+  "rssi_dbm":                  {"warning": -67,  "critical": -75,  "direction": "low"},
+  "snr_db":                    {"warning": 25,   "critical": 15,   "direction": "low"},
+  "retransmission_pct":        {"warning": 10,   "critical": 20,   "direction": "high"},
+  "dns_failure_pct":           {"warning": 5,    "critical": 20,   "direction": "high"},
+  "dns_response_ms":           {"warning": 200,  "critical": 1000, "direction": "high"},
+  "dhcp_failure_pct":          {"warning": 5,    "critical": 20,   "direction": "high"},
+  "dhcp_pool_utilization_pct": {"warning": 90,   "critical": 98,   "direction": "high"}
+}

@@ -1,0 +1,20 @@
+{
+  "incident_id": "INC-SPARSE",
+  "records": [
+    {
+      "device_id": "LIBRARY_PC_07",
+      "timestamp": "2026-10-31T10:00:00Z",
+      "metrics": {
+        "latency_ms": 210,
+        "cpu_utilization_pct": null
+      }
+    },
+    {
+      "device_id": "LIBRARY_AP_02",
+      "timestamp": "2026-10-31T09:20:00Z",
+      "metrics": {
+        "connected_clients": 18
+      }
+    }
+  ]
+}

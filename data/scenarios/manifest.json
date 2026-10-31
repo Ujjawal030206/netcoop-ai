@@ -1,0 +1,99 @@
+{
+  "normal.json": {
+    "status": "healthy",
+    "cause": "normal",
+    "description": "All devices healthy."
+  },
+  "link_congestion.json": {
+    "status": "diagnosed",
+    "cause": "link_congestion",
+    "device": "HOSTEL_DIST_SW_01",
+    "description": "Hostel distribution uplink saturates; latency rises with load downstream."
+  },
+  "weak_wifi.json": {
+    "status": "diagnosed",
+    "cause": "weak_wifi_signal",
+    "device": "HOSTEL_AP_02",
+    "description": "One hostel AP has poor signal; wired PC on the same switch is fine."
+  },
+  "interface_fault.json": {
+    "status": "diagnosed",
+    "cause": "interface_fault",
+    "device": "DEPT_SW_01",
+    "description": "CSE department switch port: CRC and interface errors rising, link flapping."
+  },
+  "dns_failure.json": {
+    "status": "diagnosed",
+    "cause": "dns_failure",
+    "device": "SVC_DNS_01",
+    "description": "DNS resolver failing while the network path is healthy."
+  },
+  "dhcp_failure.json": {
+    "status": "diagnosed",
+    "cause": "dhcp_failure",
+    "device": "SVC_DHCP_01",
+    "description": "DHCP pool exhausted; new clients cannot get addresses."
+  },
+  "device_overload.json": {
+    "status": "diagnosed",
+    "cause": "device_overload",
+    "device": "CAMPUS_CORE_01",
+    "description": "Core switch CPU and memory exhausted, interfaces clean."
+  },
+  "wan_latency.json": {
+    "status": "diagnosed",
+    "cause": "path_latency",
+    "device": "INTERNET_GW",
+    "description": "Latency spike on the upstream path with no local congestion."
+  },
+  "upstream_outage.json": {
+    "status": "diagnosed",
+    "cause": "upstream_device_outage",
+    "device": "HOSTEL_DIST_SW_01",
+    "description": "Hostel distribution switch silent; everything below it unreachable."
+  },
+  "conflicting_wifi_vs_congestion.json": {
+    "status": "diagnosed",
+    "cause": "link_congestion",
+    "device": "HOSTEL_SW_01",
+    "description": "Hostel AP shows a borderline signal, but the access switch is saturated and the wired PC is slow too: agents must decide between Wi-Fi and congestion."
+  },
+  "interop_legacy_mixed.json": {
+    "status": "diagnosed",
+    "cause": "link_congestion",
+    "device": "HOSTEL_DIST_SW_01",
+    "description": "Legacy collector: camelCase names, seconds, fractions, epoch times, unit strings, a record without a device id, an out-of-range CPU value, plus findings from two external agents (one valid legacy 0.9 message, one malformed)."
+  },
+  "organiser_normal.json": {
+    "status": "healthy",
+    "cause": "normal",
+    "description": "organiser normal"
+  },
+  "organiser_latency_spike.json": {
+    "status": "diagnosed",
+    "cause": "path_latency",
+    "description": "organiser latency spike"
+  },
+  "organiser_hardware_failure.json": {
+    "status": "diagnosed",
+    "cause": "hardware_failure",
+    "device": "SW_CAMPUS_4",
+    "description": "organiser hardware failure"
+  },
+  "insufficient_data.json": {
+    "status": "insufficient_evidence",
+    "cause": null,
+    "description": "insufficient data"
+  },
+  "malformed_json.txt": {
+    "status": "error",
+    "cause": null,
+    "description": "Broken JSON: must fail with a clear message, not a crash."
+  },
+  "organiser_stream.ndjson": {
+    "status": "diagnosed",
+    "cause": "hardware_failure",
+    "device": "SW_CAMPUS_9",
+    "description": "Organiser-format NDJSON stream (5 samples) with one corrupted line."
+  }
+}

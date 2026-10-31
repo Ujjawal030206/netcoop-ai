@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NetCoop AI</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo">◈</span>
+    <div>
+      <h1>NetCoop AI</h1>
+      <p>Specialist agents that share evidence and agree on one network diagnosis</p>
+    </div>
+  </div>
+  <div class="meta" id="meta"></div>
+</header>
+
+<div class="layout">
+  <aside class="side">
+    <section>
+      <h2>Scenarios</h2>
+      <div id="scenarios" class="scenarios"></div>
+    </section>
+    <section>
+      <h2>Your own telemetry</h2>
+      <textarea id="paste" spellcheck="false" placeholder='Paste JSON, NDJSON or CSV, e.g. the organisers&#39; generator output:
+{"device_id": "SW_CAMPUS_4", "metrics": {"latency_ms": 926, ...}, "status": "Critical"}'></textarea>
+      <div class="row">
+        <label class="file">Upload file<input type="file" id="file" accept=".json,.ndjson,.csv,.txt"></label>
+        <button id="runPaste" class="primary">Diagnose</button>
+      </div>
+    </section>
+    <section>
+      <h2>Robustness test</h2>
+      <label class="check"><span>Crash an agent:</span>
+        <select id="crash">
+          <option value="">none</option>
+          <option value="performance_agent">performance_agent</option>
+          <option value="infrastructure_agent">infrastructure_agent</option>
+          <option value="connectivity_agent">connectivity_agent</option>
+        </select>
+      </label>
+      <label class="check" id="llmRow" hidden><input type="checkbox" id="llm"> <span>LLM plain-English summary</span></label>
+    </section>
+  </aside>
+
+  <main>
+    <section class="card report" id="report">
+      <div class="empty">Pick a scenario on the left to run a diagnosis.</div>
+    </section>
+
+    <div class="grid2">
+      <section class="card">
+        <div class="card-h"><h2>Network map</h2><span class="legend"><i class="ok"></i>healthy <i class="warn"></i>warning <i class="crit"></i>critical <i class="silent"></i>no data <i class="root"></i>root cause</span></div>
+        <div id="topo" class="topo"></div>
+      </section>
+      <section class="card">
+        <div class="card-h"><h2>Agents</h2><button id="replay" class="ghost" disabled>Replay ▸</button></div>
+        <div id="agents" class="agents"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <nav class="tabs" id="tabs">
+        <button data-tab="talk" class="on">Agent conversation</button>
+        <button data-tab="evidence">Evidence &amp; reasoning</button>
+        <button data-tab="interop">Data translation</button>
+        <button data-tab="json">JSON report</button>
+      </nav>
+      <div id="tab-talk" class="tab on"></div>
+      <div id="tab-evidence" class="tab"></div>
+      <div id="tab-interop" class="tab"></div>
+      <div id="tab-json" class="tab"><pre id="json"></pre></div>
+    </section>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>

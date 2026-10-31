@@ -1,0 +1,346 @@
+{
+  "schema_version": "0.9",
+  "incident_id": "INC-INTEROP",
+  "description": "Legacy collector: camelCase names, seconds, fractions, epoch times, unit strings, a record without a device id, an out-of-range CPU value, plus findings from two external agents (one valid legacy 0.9 message, one malformed).",
+  "topology": {
+    "nodes": [
+      {
+        "name": "INTERNET_GW",
+        "role": "router",
+        "zone": "core"
+      },
+      {
+        "name": "CAMPUS_CORE_01",
+        "role": "core",
+        "zone": "core"
+      },
+      {
+        "name": "HOSTEL_DIST_SW_01",
+        "role": "distribution",
+        "zone": "hostel"
+      },
+      {
+        "name": "HOSTEL_SW_01",
+        "role": "switch",
+        "zone": "hostel_A"
+      },
+      {
+        "name": "HOSTEL_AP_01",
+        "role": "ap",
+        "zone": "hostel_A"
+      },
+      {
+        "name": "HOSTEL_AP_02",
+        "role": "ap",
+        "zone": "hostel_A"
+      },
+      {
+        "name": "HOSTEL_PC_01",
+        "role": "client",
+        "zone": "hostel_A"
+      },
+      {
+        "name": "DEPT_SW_01",
+        "role": "switch",
+        "zone": "dept_cse"
+      },
+      {
+        "name": "DEPT_PC_01",
+        "role": "client",
+        "zone": "dept_cse"
+      },
+      {
+        "name": "LECTURE_HALL_AP_01",
+        "role": "ap",
+        "zone": "lecture_hall"
+      },
+      {
+        "name": "SVC_DNS_01",
+        "role": "service",
+        "zone": "core"
+      },
+      {
+        "name": "SVC_DHCP_01",
+        "role": "service",
+        "zone": "core"
+      }
+    ],
+    "edges": [
+      {
+        "source": "INTERNET_GW",
+        "target": "CAMPUS_CORE_01"
+      },
+      {
+        "source": "CAMPUS_CORE_01",
+        "target": "HOSTEL_DIST_SW_01"
+      },
+      {
+        "source": "HOSTEL_DIST_SW_01",
+        "target": "HOSTEL_SW_01"
+      },
+      {
+        "source": "HOSTEL_SW_01",
+        "target": "HOSTEL_AP_01"
+      },
+      {
+        "source": "HOSTEL_SW_01",
+        "target": "HOSTEL_AP_02"
+      },
+      {
+        "source": "HOSTEL_SW_01",
+        "target": "HOSTEL_PC_01"
+      },
+      {
+        "source": "CAMPUS_CORE_01",
+        "target": "DEPT_SW_01"
+      },
+      {
+        "source": "DEPT_SW_01",
+        "target": "DEPT_PC_01"
+      },
+      {
+        "source": "DEPT_SW_01",
+        "target": "LECTURE_HALL_AP_01"
+      },
+      {
+        "source": "CAMPUS_CORE_01",
+        "target": "SVC_DNS_01"
+      },
+      {
+        "source": "CAMPUS_CORE_01",
+        "target": "SVC_DHCP_01"
+      }
+    ]
+  },
+  "records": [
+    {
+      "host": "HOSTEL_DIST_SW_01",
+      "ts": 1793440800,
+      "linkUtil": 0.627,
+      "egressDrops": 22,
+      "rtt": "0.019 s",
+      "Jitter": {
+        "value": 5.3,
+        "unit": "ms"
+      },
+      "pktLossRate": 0.0011,
+      "cpuLoad": "38.68%",
+      "ifInErrors": 2,
+      "state": "degraded"
+    },
+    {
+      "hostname": "HOSTEL_SW_01",
+      "time": 1793440800000,
+      "latency_s": 0.033,
+      "jitterMs": 4.4,
+      "packet_loss_percent": 0.26,
+      "crc": 0,
+      "status": "OK"
+    },
+    {
+      "node": "HOSTEL_PC_01",
+      "timestamp": "2026-10-31T10:00:00+00:00",
+      "avgRtt": "25ms",
+      "loss": 0.26
+    },
+    {
+      "host": "HOSTEL_DIST_SW_01",
+      "ts": 1793440860,
+      "linkUtil": 0.69,
+      "egressDrops": 71,
+      "rtt": "0.078 s",
+      "Jitter": {
+        "value": 14.8,
+        "unit": "ms"
+      },
+      "pktLossRate": 0.0093,
+      "cpuLoad": "33.77%",
+      "ifInErrors": 2,
+      "state": "degraded"
+    },
+    {
+      "hostname": "HOSTEL_SW_01",
+      "time": 1793440860000,
+      "latency_s": 0.074,
+      "jitterMs": 13.1,
+      "packet_loss_percent": 0.73,
+      "crc": 0,
+      "status": "OK"
+    },
+    {
+      "node": "HOSTEL_PC_01",
+      "timestamp": "2026-10-31T10:01:00+00:00",
+      "avgRtt": "80ms",
+      "loss": 0.78
+    },
+    {
+      "host": "HOSTEL_DIST_SW_01",
+      "ts": 1793440920,
+      "linkUtil": 0.752,
+      "egressDrops": 137,
+      "rtt": "0.125 s",
+      "Jitter": {
+        "value": 23.6,
+        "unit": "ms"
+      },
+      "pktLossRate": 0.0156,
+      "cpuLoad": "21.01%",
+      "ifInErrors": 2,
+      "state": "degraded"
+    },
+    {
+      "hostname": "HOSTEL_SW_01",
+      "time": 1793440920000,
+      "latency_s": 0.123,
+      "jitterMs": 22.4,
+      "packet_loss_percent": 1.39,
+      "crc": 0,
+      "status": "OK"
+    },
+    {
+      "node": "HOSTEL_PC_01",
+      "timestamp": "2026-10-31T10:02:00+00:00",
+      "avgRtt": "132ms",
+      "loss": 1.38
+    },
+    {
+      "host": "HOSTEL_DIST_SW_01",
+      "ts": 1793440980,
+      "linkUtil": 0.84,
+      "egressDrops": 198,
+      "rtt": "0.170 s",
+      "Jitter": {
+        "value": 34.3,
+        "unit": "ms"
+      },
+      "pktLossRate": 0.0226,
+      "cpuLoad": "36.21%",
+      "ifInErrors": 2,
+      "state": "degraded"
+    },
+    {
+      "hostname": "HOSTEL_SW_01",
+      "time": 1793440980000,
+      "latency_s": 0.171,
+      "jitterMs": 31.5,
+      "packet_loss_percent": 1.96,
+      "crc": 0,
+      "status": "OK"
+    },
+    {
+      "node": "HOSTEL_PC_01",
+      "timestamp": "2026-10-31T10:03:00+00:00",
+      "avgRtt": "176ms",
+      "loss": 1.88
+    },
+    {
+      "host": "HOSTEL_DIST_SW_01",
+      "ts": 1793441040,
+      "linkUtil": 0.902,
+      "egressDrops": 266,
+      "rtt": "0.211 s",
+      "Jitter": {
+        "value": 45.1,
+        "unit": "ms"
+      },
+      "pktLossRate": 0.0282,
+      "cpuLoad": "36.13%",
+      "ifInErrors": 0,
+      "state": "degraded"
+    },
+    {
+      "hostname": "HOSTEL_SW_01",
+      "time": 1793441040000,
+      "latency_s": 0.228,
+      "jitterMs": 40.2,
+      "packet_loss_percent": 2.4,
+      "crc": 0,
+      "status": "OK"
+    },
+    {
+      "node": "HOSTEL_PC_01",
+      "timestamp": "2026-10-31T10:04:00+00:00",
+      "avgRtt": "229ms",
+      "loss": 2.44
+    },
+    {
+      "host": "HOSTEL_DIST_SW_01",
+      "ts": 1793441100,
+      "linkUtil": 0.962,
+      "egressDrops": 316,
+      "rtt": "0.254 s",
+      "Jitter": {
+        "value": 53.8,
+        "unit": "ms"
+      },
+      "pktLossRate": 0.0349,
+      "cpuLoad": "35.81%",
+      "ifInErrors": 1,
+      "state": "degraded"
+    },
+    {
+      "hostname": "HOSTEL_SW_01",
+      "time": 1793441100000,
+      "latency_s": 0.27,
+      "jitterMs": 50.0,
+      "packet_loss_percent": 2.92,
+      "crc": 0,
+      "status": "OK"
+    },
+    {
+      "node": "HOSTEL_PC_01",
+      "timestamp": "2026-10-31T10:05:00+00:00",
+      "avgRtt": "274ms",
+      "loss": 3.04
+    },
+    {
+      "ts": 1793440800,
+      "rtt": "0.4 s"
+    },
+    {
+      "host": "HOSTEL_AP_01",
+      "ts": 1793440800,
+      "signalStrength": "N/A",
+      "cpuLoad": 140,
+      "rtt": "12ms",
+      "fanSpeedRpm": 4200
+    }
+  ],
+  "external_findings": [
+    {
+      "version": "0.9",
+      "from": "campus_nms_probe",
+      "to": "correlation_agent",
+      "kind": "finding",
+      "sent_at": 1793441100,
+      "data": {
+        "issue": "Uplink congestion on hostel distribution",
+        "conf": 0.7,
+        "devices": [
+          "HOSTEL_DIST_SW_01"
+        ],
+        "readings": {
+          "ifUtil": "96%",
+          "outDiscards": 280
+        }
+      }
+    },
+    {
+      "protocol": "netcoop-msg/1.0",
+      "msg_id": "ext-broken-1",
+      "type": "FINDING",
+      "sender": "third_party_wifi_probe",
+      "recipient": "correlation_agent",
+      "timestamp": "2026-10-31T10:05:00Z",
+      "payload": {
+        "agent_role": "external",
+        "hypotheses": [
+          {
+            "cause": "weak_wifi_signal",
+            "score": 1.7
+          }
+        ]
+      }
+    }
+  ]
+}

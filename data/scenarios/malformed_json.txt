@@ -1,0 +1,1 @@
+{"device_id": "SW_1", "metrics": {"latency_ms": 250,,}

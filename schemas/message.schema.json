@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://netcoop.ai/schemas/message/1.0",
+  "title": "NetCoop inter-agent message (netcoop-msg/1.0)",
+  "description": "Envelope for every message exchanged between NetCoop agents. The payload shape depends on 'type'.",
+  "type": "object",
+  "required": ["protocol", "msg_id", "incident_id", "type", "sender", "recipient", "timestamp", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "protocol":    {"const": "netcoop-msg/1.0", "description": "Protocol name and version. Older versions are upgraded by a registered adapter before validation."},
+    "msg_id":      {"type": "string", "minLength": 1, "description": "Unique id of this message."},
+    "incident_id": {"type": "string", "minLength": 1, "description": "Correlation id: every message about one diagnosis carries the same incident id."},
+    "type":        {"enum": ["TASK", "TELEMETRY", "FINDING", "QUERY", "RESPONSE", "ERROR", "REPORT"]},
+    "sender":      {"type": "string", "minLength": 1, "description": "Agent name of the sender."},
+    "recipient":   {"type": "string", "minLength": 1, "description": "Agent name of the recipient, or '*' for broadcast."},
+    "in_reply_to": {"type": ["string", "null"], "description": "msg_id this message answers (RESPONSE, ERROR)."},
+    "timestamp":   {"type": "string", "format": "date-time", "description": "ISO 8601 UTC time the message was created."},
+    "payload":     {"type": "object"}
+  },
+  "allOf": [
+    {"if": {"properties": {"type": {"const": "FINDING"}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/finding"}}}},
+    {"if": {"properties": {"type": {"const": "QUERY"}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/query"}}}},
+    {"if": {"properties": {"type": {"const": "RESPONSE"}}}, "then": {"required": ["in_reply_to"], "properties": {"payload": {"$ref": "#/$defs/response"}}}},
+    {"if": {"properties": {"type": {"const": "ERROR"}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/error"}}}},
+    {"if": {"properties": {"type": {"const": "TASK"}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/task"}}}}
+  ],
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "description": "One observation backing a finding. Values are always in the canonical unit of the metric.",
+      "required": ["metric", "value", "unit", "interpretation", "severity"],
+      "properties": {
+        "metric":         {"type": "string", "description": "Canonical metric name, e.g. link_utilization_pct (see docs/PROTOCOL.md)."},
+        "value":          {"type": ["number", "string", "boolean"]},
+        "unit":           {"type": "string", "description": "ms, %, count, dBm, dB, Mbps, degC, state, ratio"},
+        "device_id":      {"type": ["string", "null"]},
+        "threshold":      {"type": ["number", "null"], "description": "Threshold the value was compared with."},
+        "interpretation": {"type": "string"},
+        "severity":       {"enum": ["normal", "warning", "critical"]},
+        "source":         {"type": "string", "description": "Agent that produced this evidence."}
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "required": ["cause", "score", "affected_devices", "evidence"],
+      "properties": {
+        "cause":            {"type": "string", "description": "Fault id from config/fault_signatures.json, e.g. link_congestion."},
+        "score":            {"type": "number", "minimum": 0, "maximum": 1, "description": "Agent's local support for this cause, 0-1."},
+        "affected_devices": {"type": "array", "items": {"type": "string"}},
+        "evidence":         {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "rationale":        {"type": "string"}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": ["agent_role", "status", "observations", "hypotheses", "checked_metrics", "missing_metrics", "data_quality"],
+      "properties": {
+        "agent_role":      {"type": "string"},
+        "status":          {"enum": ["anomalies_found", "no_anomalies", "insufficient_data"]},
+        "observations":    {"type": "array", "items": {"$ref": "#/$defs/evidence"}, "description": "All evidence the agent considers relevant (abnormal values)."},
+        "hypotheses":      {"type": "array", "items": {"$ref": "#/$defs/hypothesis"}},
+        "checked_metrics": {"type": "array", "items": {"type": "string"}, "description": "Metrics the agent had data for and evaluated."},
+        "missing_metrics": {"type": "array", "items": {"type": "string"}, "description": "Metrics the agent owns but received no data for."},
+        "data_quality":    {"type": "number", "minimum": 0, "maximum": 1},
+        "summary":         {"type": "string"},
+        "context":         {"type": "object", "description": "Extra structured context, e.g. fault domain from topology."}
+      }
+    },
+    "query": {
+      "type": "object",
+      "required": ["question", "args"],
+      "properties": {
+        "question": {"enum": ["correlate_metrics", "error_trend", "scope_check", "baseline_connectivity", "device_detail"]},
+        "args":     {"type": "object"},
+        "reason":   {"type": "string", "description": "Why the asker needs this (which hypotheses it separates)."}
+      }
+    },
+    "response": {
+      "type": "object",
+      "required": ["question", "supports", "detail"],
+      "properties": {
+        "question": {"type": "string"},
+        "supports": {"type": ["string", "null"], "description": "Fault id the answer supports, or null when inconclusive."},
+        "refutes":  {"type": ["string", "null"], "description": "Fault id the answer argues against, if any."},
+        "evidence": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+        "detail":   {"type": "string"}
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code":    {"type": "string"},
+        "message": {"type": "string"},
+        "details": {}
+      }
+    },
+    "task": {
+      "type": "object",
+      "required": ["action"],
+      "properties": {
+        "action": {"enum": ["normalize", "analyze", "correlate", "report"]},
+        "notes":  {"type": "string"}
+      }
+    }
+  }
+}

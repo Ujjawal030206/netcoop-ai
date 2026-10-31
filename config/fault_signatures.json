@@ -1,0 +1,115 @@
+{
+  "_comment": "Fault catalogue used by the Fault Correlation Agent. primary = metrics that define the fault (min_primary_abnormal of them must be at least warning, default 1); supporting = symptoms it usually causes; contradicting = abnormal values that point to a different cause (contradict_upstream: also look on the path towards the internet). Pseudo-metrics: device_status (from infrastructure), telemetry_missing and downstream_impact (from connectivity). Add a new fault here without touching code.",
+  "link_congestion": {
+    "label": "Link congestion causing egress queue drops",
+    "primary": ["link_utilization_pct", "queue_drops"],
+    "supporting": ["latency_ms", "jitter_ms", "packet_loss_pct"],
+    "contradicting": ["interface_errors", "crc_errors", "device_status"],
+    "confirm": {"agent": "performance_agent", "question": "correlate_metrics", "args": {"x": "link_utilization_pct", "y": "latency_ms"}},
+    "actions": [
+      "Inspect upstream and egress link utilisation on the affected device",
+      "Review QoS / queue configuration and traffic distribution",
+      "Identify top talkers; rate-limit or move bulk traffic off peak",
+      "Plan a capacity upgrade or add a parallel uplink (LACP) if utilisation stays above 80%"
+    ]
+  },
+  "device_overload": {
+    "label": "Network device overloaded (CPU / memory exhaustion)",
+    "primary": ["cpu_utilization_pct", "memory_utilization_pct"],
+    "supporting": ["queue_drops", "latency_ms", "temperature_c"],
+    "contradicting": ["interface_errors", "device_status"],
+    "confirm": {"agent": "infrastructure_agent", "question": "device_detail", "args": {}},
+    "actions": [
+      "Check the device process table for runaway processes (e.g. control-plane storms)",
+      "Look for broadcast storms or loops (spanning-tree events) driving CPU",
+      "Reduce control-plane load (logging, SNMP polling rate) and schedule a maintenance reload if memory leaks"
+    ]
+  },
+  "hardware_failure": {
+    "label": "Hardware failure on the device (critical status, interface errors, CPU saturation)",
+    "primary": ["device_status", "interface_errors", "cpu_utilization_pct"],
+    "min_primary_abnormal": 2,
+    "supporting": ["packet_loss_pct", "queue_drops", "latency_ms", "crc_errors", "link_flaps", "temperature_c"],
+    "contradicting": [],
+    "confirm": {"agent": "infrastructure_agent", "question": "device_detail", "args": {}},
+    "actions": [
+      "Fail traffic over to a redundant path or standby device if one exists",
+      "Check hardware logs, power supply, fans and temperature on the device",
+      "Reseat or replace the faulty line card / transceiver; open a hardware RMA if errors persist"
+    ]
+  },
+  "interface_fault": {
+    "label": "Ethernet / interface fault (physical-layer errors on a link)",
+    "primary": ["interface_errors", "crc_errors", "link_flaps"],
+    "supporting": ["packet_loss_pct", "latency_ms"],
+    "contradicting": ["cpu_utilization_pct", "link_utilization_pct"],
+    "confirm": {"agent": "infrastructure_agent", "question": "error_trend", "args": {}},
+    "actions": [
+      "Inspect and replace the patch cable / SFP transceiver on the affected port",
+      "Check duplex and speed negotiation on both ends of the link",
+      "Move the connection to a spare port to rule out a faulty switch port"
+    ]
+  },
+  "weak_wifi_signal": {
+    "label": "Weak Wi-Fi signal causing retransmissions and poor performance",
+    "primary": ["rssi_dbm", "snr_db", "retransmission_pct"],
+    "supporting": ["latency_ms", "jitter_ms", "packet_loss_pct"],
+    "contradicting": ["interface_errors", "link_utilization_pct"],
+    "confirm": {"agent": "connectivity_agent", "question": "scope_check", "args": {}},
+    "actions": [
+      "Survey the zone; reposition the access point or add one to close the coverage gap",
+      "Check for co-channel interference and adjust channel / transmit power",
+      "Steer capable clients to 5 GHz and review minimum data-rate settings"
+    ]
+  },
+  "dns_failure": {
+    "label": "DNS service failure (name resolution failing while the network path is healthy)",
+    "primary": ["dns_failure_pct", "dns_response_ms"],
+    "supporting": [],
+    "contradicting": ["packet_loss_pct", "link_utilization_pct"],
+    "confirm": {"agent": "performance_agent", "question": "baseline_connectivity", "args": {}},
+    "actions": [
+      "Check the DNS server process and logs; restart the resolver if it is hung",
+      "Verify upstream forwarders are reachable and responding",
+      "Point clients to the secondary DNS server temporarily via DHCP option 6"
+    ]
+  },
+  "dhcp_failure": {
+    "label": "DHCP service failure (clients cannot obtain IP addresses)",
+    "primary": ["dhcp_failure_pct", "dhcp_pool_utilization_pct"],
+    "supporting": [],
+    "contradicting": ["packet_loss_pct", "link_utilization_pct"],
+    "confirm": {"agent": "performance_agent", "question": "baseline_connectivity", "args": {}},
+    "actions": [
+      "Check DHCP server health and the address pool for the affected VLAN",
+      "Shorten lease time or extend the scope if the pool is exhausted",
+      "Verify the DHCP relay (ip helper-address) on the access-layer gateway"
+    ]
+  },
+  "path_latency": {
+    "label": "Latency / jitter spike without local congestion (likely upstream or WAN path / routing issue)",
+    "primary": ["latency_ms", "jitter_ms"],
+    "supporting": ["packet_loss_pct"],
+    "contradicting": ["link_utilization_pct", "queue_drops", "cpu_utilization_pct", "rssi_dbm", "interface_errors", "dns_failure_pct", "dhcp_failure_pct", "telemetry_missing", "device_status"],
+    "contradict_upstream": true,
+    "confirm": {"agent": "performance_agent", "question": "correlate_metrics", "args": {"x": "link_utilization_pct", "y": "latency_ms"}},
+    "actions": [
+      "Trace the path (traceroute / MTR) from the affected segment to find the hop where latency rises",
+      "Check the upstream / ISP link and routing changes around the incident time",
+      "Escalate to the upstream provider if the delay is outside the campus network"
+    ]
+  },
+  "upstream_device_outage": {
+    "label": "Upstream device outage affecting downstream devices",
+    "primary": ["telemetry_missing", "downstream_impact"],
+    "min_primary_abnormal": 2,
+    "supporting": ["device_status", "packet_loss_pct"],
+    "contradicting": [],
+    "confirm": {"agent": "connectivity_agent", "question": "scope_check", "args": {}},
+    "actions": [
+      "Check power and reachability of the upstream device (console / out-of-band)",
+      "Verify the uplink between the upstream device and its parent",
+      "Fail downstream segments over to a redundant uplink if available"
+    ]
+  }
+}
