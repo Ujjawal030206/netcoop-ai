@@ -1,6 +1,6 @@
 """Streamlit dashboard: the same engine as server.py, styled as a network operations console.
 
-    streamlit run streamlit_app.py
+    python -m streamlit run streamlit_app.py
 
 Four panes: network map | agent conversation (QUERY/RESPONSE highlighted) | evidence | translation log.
 A switch turns the agents' follow-up questions off, to show live what they add.

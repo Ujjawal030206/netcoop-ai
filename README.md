@@ -50,7 +50,7 @@ The diagnosis is deterministic: the same input always gives the same answer. No 
 
 ```bash
 pip install -r requirements.txt
-streamlit run streamlit_app.py       # Streamlit dashboard at http://localhost:8501
+python -m streamlit run streamlit_app.py   # Streamlit dashboard at http://localhost:8501
 python server.py                     # or the FastAPI dashboard + REST API at http://127.0.0.1:8000
 ```
 
@@ -321,7 +321,7 @@ Every run produces a JSON report in the required structure (`incident_id`, `stat
 
 ## Dashboards and API
 
-**Streamlit** (`streamlit run streamlit_app.py`): one page with four panes, the network map (health colours, root cause outlined in blue), the agent conversation (every netcoop-msg/1.0 message, QUERY/RESPONSE highlighted, a filter to show only the follow-up questions, raw JSON), evidence and reasoning (evidence table, follow-up answers, conflicts, counterfactual, the confidence calculation with real numbers, alternatives, actions, early warnings, limitations) and the translation log (field and unit translations, validation issues, rejected messages). The sidebar picks a scenario or takes pasted / uploaded telemetry, simulates an agent crash, and has a switch that **turns the follow-up questions off**: on `ambiguous_wifi.json` the diagnosis flips from the correct weak Wi-Fi signal to congestion, which is the ablation result live. `tests/test_streamlit.py` drives the page headlessly for every scenario.
+**Streamlit** (`python -m streamlit run streamlit_app.py`): one page with four panes, the network map (health colours, root cause outlined in blue), the agent conversation (every netcoop-msg/1.0 message, QUERY/RESPONSE highlighted, a filter to show only the follow-up questions, raw JSON), evidence and reasoning (evidence table, follow-up answers, conflicts, counterfactual, the confidence calculation with real numbers, alternatives, actions, early warnings, limitations) and the translation log (field and unit translations, validation issues, rejected messages). The sidebar picks a scenario or takes pasted / uploaded telemetry, simulates an agent crash, and has a switch that **turns the follow-up questions off**: on `ambiguous_wifi.json` the diagnosis flips from the correct weak Wi-Fi signal to congestion, which is the ablation result live. `tests/test_streamlit.py` drives the page headlessly for every scenario.
 
 **FastAPI** (`python server.py`) serves the same engine as a dashboard with no external assets (works offline): scenario picker, paste/upload your own telemetry, network map coloured by health with the root cause outlined, an animated diagram of the agents exchanging messages, the full conversation with every message's JSON, evidence with trend sparklines, follow-up questions and conflicts, the confidence calculation with real numbers, the data-translation log, and the JSON report. A switch simulates an agent crash.
 
