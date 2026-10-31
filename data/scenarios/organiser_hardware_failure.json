@@ -4,10 +4,10 @@
   "metrics": {
     "cpu_utilization_pct": 99.9,
     "link_utilization_pct": 100.0,
-    "packet_loss_pct": 22.08,
-    "latency_ms": 753.4,
-    "queue_drops": 8241,
-    "interface_errors": 434
+    "packet_loss_pct": 23.81,
+    "latency_ms": 719.76,
+    "queue_drops": 8561,
+    "interface_errors": 393
   },
   "status": "Critical"
 }

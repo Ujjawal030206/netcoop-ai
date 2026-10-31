@@ -86,6 +86,8 @@ class CorrelationAgent(Agent):
         obs = [o for f in self.findings.values() for o in f.get("observations", [])]
         idx = scoring.EvidenceIndex(obs, topology)
         ranked = dict(scoring.rank(idx))
+        for cause, r in ranked.items():   # before any bonus, so the scores compare like with like
+            r["counterfactual"] = scoring.counterfactual(cause, r, idx)
 
         votes = {}
         for agent, f in self.findings.items():
@@ -117,7 +119,10 @@ class CorrelationAgent(Agent):
                 r["score"] = min(1.0, r["score"] + bonus)
                 adjustments[cause].append(f"+{bonus}: external agent {ext[0][0]} agrees")
 
-        abnormal = [o for o in obs if o["severity"] != "normal"]
+        # a silent device on its own is a monitoring gap, not a symptom; it only counts
+        # when it is part of a candidate fault (an outage with devices cut off below it)
+        abnormal = [o for o in obs if o["severity"] != "normal"
+                    and (o["metric"] not in ("telemetry_missing", "downstream_impact") or ranked)]
         dialogue, conflicts = [], []
         order = sorted(ranked, key=lambda c: -ranked[c]["score"])
 
@@ -162,7 +167,9 @@ class CorrelationAgent(Agent):
         dq = (self.telemetry or {}).get("quality", {}).get("score", 0.5)
         diag = {"ranked": [], "dialogue": dialogue, "conflicts": conflicts, "missing_agents": missing_agents,
                 "data_quality": dq, "abnormal_count": len(abnormal), "adjustments": adjustments,
-                "scope": self.findings.get("connectivity_agent", {}).get("context", {})}
+                "scope": self.findings.get("connectivity_agent", {}).get("context", {}),
+                "early_warnings": [w for f in self.findings.values()
+                                   for w in (f.get("context") or {}).get("early_warnings", [])]}
         for c in order:
             r = ranked[c]
             diag["ranked"].append({"cause": c, "label": knowledge.signatures()[c]["label"],
@@ -170,12 +177,14 @@ class CorrelationAgent(Agent):
                                    "affected_devices": r["affected_devices"], "sources": r["sources"],
                                    "evidence": r["evidence"], "contradicting_evidence": r["contradicting_evidence"],
                                    "missing_primary": r["missing_primary"], "coverage": r["coverage"],
+                                   "counterfactual": r.get("counterfactual"),
                                    "adjustments": adjustments.get(c, [])})
 
         checked = {o["metric"] for o in obs}
         if not abnormal:
             diag["status"] = "healthy" if len(checked) >= 3 else "insufficient_evidence"
-            diag["confidence"] = round(min(0.95, 0.5 + 0.05 * len(checked)) * (0.5 + 0.5 * dq), 2) \
+            silent = len(diag["scope"].get("devices_without_telemetry") or [])
+            diag["confidence"] = round(min(0.95, 0.5 + 0.05 * len(checked)) * (0.5 + 0.5 * dq) * 0.9 ** silent, 2) \
                 if diag["status"] == "healthy" else 0.2
         elif not order:
             diag["status"] = "insufficient_evidence"
@@ -263,6 +272,9 @@ def build_report(incident_id, diag, telemetry, notes=""):
         report["suspected_root_cause"] = "No fault detected: all measurements are within expected ranges"
         report["root_cause_id"] = "normal"
         affected, evidence, actions = [], [], ["No action needed; continue routine monitoring"]
+        silent = (telemetry or {}).get("topology", {}).get("no_telemetry") or []
+        if silent:
+            actions = [f"Restore monitoring on {', '.join(silent)}: it sent no telemetry, so its health is unknown"] + actions
     elif top:
         prefix = {"high": "Likely", "medium": "Probable", "low": "Possible (low confidence):"}[cat]
         label = top["label"][0].lower() + top["label"][1:]
@@ -271,6 +283,7 @@ def build_report(incident_id, diag, telemetry, notes=""):
         affected = top["affected_devices"]
         evidence = top["evidence"]
         sig = knowledge.signatures()[top["cause"]]
+        report["counterfactual"] = top.get("counterfactual")
         actions = list(sig["actions"])
         actions[0] = f"{actions[0]} ({top['device']})"
         if cat == "low":
@@ -301,6 +314,7 @@ def build_report(incident_id, diag, telemetry, notes=""):
     report["alternative_causes"] = [f"{r['label']} at {r['device']} (score {r['score']:.2f})" for r in alts]
     report["alternatives_detail"] = [
         {"cause": r["cause"], "device": r["device"], "score": r["score"],
+         "counterfactual": r.get("counterfactual"),
          "why_less_likely": ("; ".join(r["adjustments"]) or
                              (f"contradicted by {', '.join(e['metric'] for e in r['contradicting_evidence'])}"
                               if r["contradicting_evidence"] else "explains fewer of the abnormal readings"))}
@@ -330,6 +344,7 @@ def build_report(incident_id, diag, telemetry, notes=""):
     if diag["status"] == "diagnosed" and cat != "high":
         limitations.append("Root cause requires further verification")
     report["limitations"] = limitations
+    report["early_warnings"] = [w["note"] for w in diag.get("early_warnings", [])]
     report["conflicts_resolved"] = diag["conflicts"]
     report["inter_agent_queries"] = diag["dialogue"]
     report["confidence_method"] = diag.get("confidence_inputs")
@@ -383,9 +398,13 @@ def to_markdown(r):
         for q in r["inter_agent_queries"]:
             lines.append(f"- **{q['from']} -> {q['to']}** ({q['question']} on {q['device']}): {q['answer']}")
         lines.append("")
+    if r.get("counterfactual"):
+        lines += ["## What would change the answer", "", r["counterfactual"], ""]
     if r["alternative_causes"]:
         lines += ["## Alternatives considered", ""] + [f"- {a}" for a in r["alternative_causes"]] + [""]
     lines += ["## Recommended actions", ""] + [f"{i}. {a}" for i, a in enumerate(r["recommended_actions"], 1)] + [""]
+    if r.get("early_warnings"):
+        lines += ["## Early warnings (below thresholds, not used for the diagnosis)", ""] + [f"- {w}" for w in r["early_warnings"]] + [""]
     if r["limitations"]:
         lines += ["## Limitations", ""] + [f"- {x}" for x in r["limitations"]] + [""]
     return "\n".join(lines)

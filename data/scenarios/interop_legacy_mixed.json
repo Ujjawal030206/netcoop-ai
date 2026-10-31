@@ -116,182 +116,182 @@
     {
       "host": "HOSTEL_DIST_SW_01",
       "ts": 1793440800,
-      "linkUtil": 0.627,
-      "egressDrops": 22,
-      "rtt": "0.019 s",
+      "linkUtil": 0.619,
+      "egressDrops": 11,
+      "rtt": "0.026 s",
       "Jitter": {
-        "value": 5.3,
+        "value": 4.1,
         "unit": "ms"
       },
-      "pktLossRate": 0.0011,
-      "cpuLoad": "38.68%",
+      "pktLossRate": 0.0017,
+      "cpuLoad": "38.09%",
       "ifInErrors": 2,
       "state": "degraded"
     },
     {
       "hostname": "HOSTEL_SW_01",
       "time": 1793440800000,
-      "latency_s": 0.033,
-      "jitterMs": 4.4,
-      "packet_loss_percent": 0.26,
+      "latency_s": 0.026,
+      "jitterMs": 3.9,
+      "packet_loss_percent": 0.24,
       "crc": 0,
       "status": "OK"
     },
     {
       "node": "HOSTEL_PC_01",
       "timestamp": "2026-10-31T10:00:00+00:00",
-      "avgRtt": "25ms",
-      "loss": 0.26
+      "avgRtt": "34ms",
+      "loss": 0.22
     },
     {
       "host": "HOSTEL_DIST_SW_01",
       "ts": 1793440860,
-      "linkUtil": 0.69,
-      "egressDrops": 71,
-      "rtt": "0.078 s",
+      "linkUtil": 0.696,
+      "egressDrops": 80,
+      "rtt": "0.073 s",
       "Jitter": {
-        "value": 14.8,
+        "value": 16.3,
         "unit": "ms"
       },
-      "pktLossRate": 0.0093,
-      "cpuLoad": "33.77%",
+      "pktLossRate": 0.0089,
+      "cpuLoad": "33.12%",
       "ifInErrors": 2,
       "state": "degraded"
     },
     {
       "hostname": "HOSTEL_SW_01",
       "time": 1793440860000,
-      "latency_s": 0.074,
-      "jitterMs": 13.1,
-      "packet_loss_percent": 0.73,
+      "latency_s": 0.071,
+      "jitterMs": 14.2,
+      "packet_loss_percent": 0.75,
       "crc": 0,
       "status": "OK"
     },
     {
       "node": "HOSTEL_PC_01",
       "timestamp": "2026-10-31T10:01:00+00:00",
-      "avgRtt": "80ms",
-      "loss": 0.78
+      "avgRtt": "72ms",
+      "loss": 0.73
     },
     {
       "host": "HOSTEL_DIST_SW_01",
       "ts": 1793440920,
-      "linkUtil": 0.752,
-      "egressDrops": 137,
-      "rtt": "0.125 s",
+      "linkUtil": 0.763,
+      "egressDrops": 132,
+      "rtt": "0.115 s",
       "Jitter": {
-        "value": 23.6,
+        "value": 25.1,
         "unit": "ms"
       },
-      "pktLossRate": 0.0156,
-      "cpuLoad": "21.01%",
-      "ifInErrors": 2,
+      "pktLossRate": 0.0152,
+      "cpuLoad": "22.95%",
+      "ifInErrors": 1,
       "state": "degraded"
     },
     {
       "hostname": "HOSTEL_SW_01",
       "time": 1793440920000,
-      "latency_s": 0.123,
-      "jitterMs": 22.4,
-      "packet_loss_percent": 1.39,
+      "latency_s": 0.124,
+      "jitterMs": 24.3,
+      "packet_loss_percent": 1.25,
       "crc": 0,
       "status": "OK"
     },
     {
       "node": "HOSTEL_PC_01",
       "timestamp": "2026-10-31T10:02:00+00:00",
-      "avgRtt": "132ms",
-      "loss": 1.38
+      "avgRtt": "119ms",
+      "loss": 1.36
     },
     {
       "host": "HOSTEL_DIST_SW_01",
       "ts": 1793440980,
-      "linkUtil": 0.84,
-      "egressDrops": 198,
-      "rtt": "0.170 s",
+      "linkUtil": 0.828,
+      "egressDrops": 199,
+      "rtt": "0.167 s",
       "Jitter": {
-        "value": 34.3,
+        "value": 34.6,
         "unit": "ms"
       },
-      "pktLossRate": 0.0226,
-      "cpuLoad": "36.21%",
-      "ifInErrors": 2,
+      "pktLossRate": 0.0213,
+      "cpuLoad": "20.31%",
+      "ifInErrors": 0,
       "state": "degraded"
     },
     {
       "hostname": "HOSTEL_SW_01",
       "time": 1793440980000,
-      "latency_s": 0.171,
-      "jitterMs": 31.5,
-      "packet_loss_percent": 1.96,
+      "latency_s": 0.18,
+      "jitterMs": 31.4,
+      "packet_loss_percent": 1.87,
       "crc": 0,
       "status": "OK"
     },
     {
       "node": "HOSTEL_PC_01",
       "timestamp": "2026-10-31T10:03:00+00:00",
-      "avgRtt": "176ms",
-      "loss": 1.88
+      "avgRtt": "171ms",
+      "loss": 1.81
     },
     {
       "host": "HOSTEL_DIST_SW_01",
       "ts": 1793441040,
-      "linkUtil": 0.902,
+      "linkUtil": 0.908,
       "egressDrops": 266,
-      "rtt": "0.211 s",
+      "rtt": "0.209 s",
       "Jitter": {
-        "value": 45.1,
+        "value": 44.3,
         "unit": "ms"
       },
-      "pktLossRate": 0.0282,
-      "cpuLoad": "36.13%",
-      "ifInErrors": 0,
+      "pktLossRate": 0.0288,
+      "cpuLoad": "35.93%",
+      "ifInErrors": 1,
       "state": "degraded"
     },
     {
       "hostname": "HOSTEL_SW_01",
       "time": 1793441040000,
-      "latency_s": 0.228,
-      "jitterMs": 40.2,
-      "packet_loss_percent": 2.4,
+      "latency_s": 0.221,
+      "jitterMs": 40.0,
+      "packet_loss_percent": 2.39,
       "crc": 0,
       "status": "OK"
     },
     {
       "node": "HOSTEL_PC_01",
       "timestamp": "2026-10-31T10:04:00+00:00",
-      "avgRtt": "229ms",
-      "loss": 2.44
+      "avgRtt": "226ms",
+      "loss": 2.49
     },
     {
       "host": "HOSTEL_DIST_SW_01",
       "ts": 1793441100,
-      "linkUtil": 0.962,
-      "egressDrops": 316,
-      "rtt": "0.254 s",
+      "linkUtil": 0.967,
+      "egressDrops": 317,
+      "rtt": "0.264 s",
       "Jitter": {
-        "value": 53.8,
+        "value": 55.6,
         "unit": "ms"
       },
-      "pktLossRate": 0.0349,
-      "cpuLoad": "35.81%",
-      "ifInErrors": 1,
+      "pktLossRate": 0.0356,
+      "cpuLoad": "38.3%",
+      "ifInErrors": 0,
       "state": "degraded"
     },
     {
       "hostname": "HOSTEL_SW_01",
       "time": 1793441100000,
-      "latency_s": 0.27,
-      "jitterMs": 50.0,
-      "packet_loss_percent": 2.92,
+      "latency_s": 0.269,
+      "jitterMs": 49.2,
+      "packet_loss_percent": 3.04,
       "crc": 0,
       "status": "OK"
     },
     {
       "node": "HOSTEL_PC_01",
       "timestamp": "2026-10-31T10:05:00+00:00",
-      "avgRtt": "274ms",
-      "loss": 3.04
+      "avgRtt": "269ms",
+      "loss": 3.01
     },
     {
       "ts": 1793440800,

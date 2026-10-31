@@ -1,5 +1,7 @@
 """Shared agent behaviour: message handling and the standard FINDING builder."""
 
+import statistics
+
 from .. import catalog, knowledge, scoring
 from ..protocol import make_message
 
@@ -59,6 +61,36 @@ class AnalysisAgent(Agent):
     def extra_observations(self):
         return []
 
+    def early_warnings(self):
+        """Per-device baseline check: is the newest sample far outside the device's own recent
+        history, even though it is still below the static warning threshold? Robust z-score
+        (median / MAD) of the last sample against the earlier ones, and the jump must cover at
+        least half the distance to the warning threshold. Reported as early warnings
+        only; it never feeds the diagnosis, because a handful of samples gives a noisy baseline."""
+        out = []
+        for did, dev in self.telemetry["devices"].items():
+            for metric, info in dev["metrics"].items():
+                t = knowledge.thresholds().get(metric)
+                if metric not in self.owned or not t or len(info["series"]) < 5:
+                    continue
+                vals = [v for _, v in info["series"]]
+                last, base = vals[-1], vals[:-1]
+                med = statistics.median(base)
+                mad = statistics.median(abs(v - med) for v in base)
+                spread = max(1.4826 * mad, 0.05 * abs(med), 0.1 * abs(t["warning"]))
+                z = (last - med) / spread
+                worse = z > 0 if t["direction"] == "high" else z < 0
+                gap = t["warning"] - med
+                # must also have covered at least half the distance to the warning threshold
+                halfway = gap != 0 and (last - med) / gap >= 0.5
+                if not worse or abs(z) < 4 or not halfway or knowledge.assess(metric, last)[0] != "normal":
+                    continue
+                out.append({"device_id": did, "metric": metric, "value": round(last, 2),
+                            "baseline": round(med, 2), "z": round(z, 1), "source": self.name,
+                            "note": f"{metric} on {did} jumped to {last:.2f} from a typical {med:.2f} "
+                                    f"(robust z = {z:.1f}) while still below the warning threshold {t['warning']}"})
+        return out
+
     def context(self, observations):
         return {}
 
@@ -95,7 +127,7 @@ class AnalysisAgent(Agent):
         payload = {"agent_role": self.role, "status": status, "observations": obs, "hypotheses": hyps,
                    "checked_metrics": checked, "missing_metrics": missing,
                    "data_quality": self.telemetry["quality"]["score"], "summary": summary,
-                   "context": self.context(obs)}
+                   "context": {**self.context(obs), "early_warnings": self.early_warnings()}}
         return [self.reply(msg, "FINDING", payload, recipient="correlation_agent")]
 
     def on_query(self, msg):

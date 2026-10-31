@@ -147,6 +147,34 @@ def evaluate(sig, device, idx, allowed=None):
     }
 
 
+def counterfactual(cause, result, idx):
+    """Re-score the fault with its strongest defining reading moved just inside the normal
+    range. -> sentence saying how the diagnosis depends on that reading, or None."""
+    sig = knowledge.signatures()[cause]
+    device = result["device"]
+    prim = [(strength(e), e) for e in result["evidence"]
+            if e.get("device_id") == device and e["metric"] in sig["primary"]
+            and e["metric"] in knowledge.thresholds()]
+    if not prim:
+        return None
+    _, ev = max(prim, key=lambda p: p[0])
+    t = knowledge.thresholds()[ev["metric"]]
+    step = max(abs(t["warning"]) * 0.01, 0.1)
+    normal_value = t["warning"] - step if t["direction"] == "high" else t["warning"] + step
+    saved = idx.items[(device, ev["metric"])]
+    idx.items[(device, ev["metric"])] = {**ev, "value": normal_value, "worst": None}
+    try:
+        again = evaluate(sig, device, idx)
+    finally:
+        idx.items[(device, ev["metric"])] = saved
+    shown = ev.get("worst") if ev.get("worst") is not None else ev["value"]
+    head = (f"Had {ev['metric']} on {device} stayed below its warning threshold "
+            f"({t['warning']} {ev['unit']}; observed {shown} {ev['unit']})")
+    if again is None:
+        return f"{head}, '{cause}' would not have been a candidate at all."
+    return f"{head}, '{cause}' would have scored {again['score']:.2f} instead of {result['score']:.2f}."
+
+
 def rank(idx, allowed=None, causes=None):
     """Best-scoring device per fault. -> list of (cause, result) sorted by score, high first."""
     out = []

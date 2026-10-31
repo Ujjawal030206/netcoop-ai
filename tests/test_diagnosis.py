@@ -63,3 +63,26 @@ def test_same_input_same_answer():
     a, b = diagnose(raw)["report"], diagnose(raw)["report"]
     for k in ("root_cause_id", "confidence", "affected_devices"):
         assert a[k] == b[k]
+
+
+def test_early_warning_catches_creep_below_threshold_but_not_noise():
+    import random
+    import sys
+    sys.path.insert(0, str(DIR.parent.parent / "tools"))
+    import generate_scenarios as g
+
+    def creep(i, m):
+        m["latency_ms"] = [8, 9, 8, 10, 9, 70][i]
+
+    random.seed(3)
+    r = diagnose(g.batch("creep", {"HOSTEL_PC_01": creep}))["report"]
+    assert r["status"] == "healthy"            # 70 ms is under the threshold: no fault is claimed
+    assert any("HOSTEL_PC_01" in w for w in r["early_warnings"])
+    for seed in range(10):
+        random.seed(seed)
+        assert diagnose(g.batch("n", {}))["report"]["early_warnings"] == []
+
+
+def test_counterfactual_explains_dependence_on_the_key_reading():
+    r = diagnose((DIR / "link_congestion.json").read_text(encoding="utf-8"))["report"]
+    assert r["counterfactual"].startswith("Had ") and "link_congestion" in r["counterfactual"]

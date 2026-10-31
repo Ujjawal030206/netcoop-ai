@@ -61,7 +61,8 @@ Every inter-agent message is a JSON object with exactly these fields. The messag
 | Field | Type | Required | Meaning |
 |---|---|---|---|
 | `metric` | string | yes | Canonical metric name, e.g. link_utilization_pct (see docs/PROTOCOL.md). |
-| `value` | number / string / boolean | yes |  |
+| `value` | number / string / boolean | yes | Median of the samples received, in the canonical unit. |
+| `worst` | number / null | no | Worst sample when several were received; a peak past the threshold is graded at 85% strength. |
 | `unit` | string | yes | ms, %, count, dBm, dB, Mbps, degC, state, ratio |
 | `device_id` | string / null | no |  |
 | `threshold` | number / null | no | Threshold the value was compared with. |
@@ -213,42 +214,44 @@ FINDING (performance_agent, trimmed to two observations):
 ```json
 {
   "protocol": "netcoop-msg/1.0",
-  "msg_id": "msg-a6ec7366c8",
+  "msg_id": "msg-cb877f9609",
   "incident_id": "INC-CONFLICTING",
   "type": "FINDING",
   "sender": "performance_agent",
   "recipient": "correlation_agent",
-  "in_reply_to": "msg-af99065b2c",
-  "timestamp": "2026-10-31T13:46:47.612Z",
+  "in_reply_to": "msg-20efd12770",
+  "timestamp": "2026-10-31T14:11:43.668Z",
   "payload": {
     "agent_role": "telemetry_performance",
     "status": "anomalies_found",
     "observations": [
       {
-        "metric": "link_utilization_pct",
-        "value": 34.87,
+        "metric": "packet_loss_pct",
+        "value": 0.06,
         "unit": "%",
         "device_id": "INTERNET_GW",
-        "threshold": 80,
-        "interpretation": "Link utilisation within capacity (median of 6 samples, worst 52.69)",
+        "threshold": 1,
+        "interpretation": "No significant packet loss (median of 6 samples, worst 0.15)",
         "severity": "normal",
-        "source": "performance_agent"
+        "source": "performance_agent",
+        "worst": 0.15
       },
       {
-        "metric": "jitter_ms",
-        "value": 2.36,
+        "metric": "latency_ms",
+        "value": 8.48,
         "unit": "ms",
         "device_id": "INTERNET_GW",
-        "threshold": 30,
-        "interpretation": "Normal jitter (median of 6 samples, worst 2.95)",
+        "threshold": 100,
+        "interpretation": "Normal latency (median of 6 samples, worst 11.62)",
         "severity": "normal",
-        "source": "performance_agent"
+        "source": "performance_agent",
+        "worst": 11.62
       }
     ],
     "hypotheses": [
       {
         "cause": "link_congestion",
-        "score": 0.616,
+        "score": 0.679,
         "affected_devices": [
           "HOSTEL_SW_01",
           "HOSTEL_AP_01",
@@ -263,7 +266,8 @@ FINDING (performance_agent, trimmed to two observations):
             "threshold": 80,
             "interpretation": "High link utilisation (median of 6 samples, worst 96.78)",
             "severity": "warning",
-            "source": "performance_agent"
+            "source": "performance_agent",
+            "worst": 96.78
           }
         ],
         "rationale": "Link congestion causing egress queue drops - seen from telemetry_performance metrics only (4 supporting readings, 50% of defining metrics available)"
@@ -280,8 +284,10 @@ FINDING (performance_agent, trimmed to two observations):
       "throughput_mbps"
     ],
     "data_quality": 1.0,
-    "summary": "6 abnormal reading(s) on 3 device(s); worst: HOSTEL_AP_01 latency_ms=200.18 ms (warning); HOSTEL_AP_01 jitter_ms=42.62 ms (warning); HOSTEL_SW_01 link_utilization_pct=83.28 % (warning)",
-    "context": {}
+    "summary": "8 abnormal reading(s) on 3 device(s); worst: HOSTEL_AP_01 latency_ms=200.18 ms (warning); HOSTEL_SW_01 link_utilization_pct=83.28 % (warning); HOSTEL_PC_01 latency_ms=144.49 ms (warning)",
+    "context": {
+      "early_warnings": []
+    }
   }
 }
 ```
@@ -291,13 +297,13 @@ QUERY:
 ```json
 {
   "protocol": "netcoop-msg/1.0",
-  "msg_id": "msg-0dbc3b3d1f",
+  "msg_id": "msg-2c2afc6f9d",
   "incident_id": "INC-CONFLICTING",
   "type": "QUERY",
   "sender": "correlation_agent",
   "recipient": "performance_agent",
   "in_reply_to": null,
-  "timestamp": "2026-10-31T13:46:47.629Z",
+  "timestamp": "2026-10-31T14:11:43.687Z",
   "payload": {
     "question": "correlate_metrics",
     "args": {
@@ -306,7 +312,7 @@ QUERY:
       "device": "HOSTEL_SW_01",
       "cause": "link_congestion"
     },
-    "reason": "check 'link_congestion' on HOSTEL_SW_01 (score 0.86)"
+    "reason": "check 'link_congestion' on HOSTEL_SW_01 (score 0.88)"
   }
 }
 ```
@@ -316,13 +322,13 @@ RESPONSE:
 ```json
 {
   "protocol": "netcoop-msg/1.0",
-  "msg_id": "msg-fd353b4778",
+  "msg_id": "msg-769978a0ef",
   "incident_id": "INC-CONFLICTING",
   "type": "RESPONSE",
   "sender": "performance_agent",
   "recipient": "correlation_agent",
-  "in_reply_to": "msg-0dbc3b3d1f",
-  "timestamp": "2026-10-31T13:46:47.630Z",
+  "in_reply_to": "msg-2c2afc6f9d",
+  "timestamp": "2026-10-31T14:11:43.687Z",
   "payload": {
     "question": "correlate_metrics",
     "supports": "link_congestion",
@@ -349,13 +355,13 @@ ERROR produced by the bus for an invalid external message (from `interop_legacy_
 ```json
 {
   "protocol": "netcoop-msg/1.0",
-  "msg_id": "msg-67425d822e",
+  "msg_id": "msg-ebeeeb1e59",
   "incident_id": "INC-INTEROP",
   "type": "ERROR",
   "sender": "message_bus",
   "recipient": "third_party_wifi_probe",
   "in_reply_to": null,
-  "timestamp": "2026-10-31T13:46:47.644Z",
+  "timestamp": "2026-10-31T14:11:43.701Z",
   "payload": {
     "code": "schema_validation_failed",
     "message": "message from third_party_wifi_probe rejected: payload: 'status' is a required property",

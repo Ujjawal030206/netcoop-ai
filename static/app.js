@@ -299,6 +299,9 @@ function renderEvidence(res) {
   if ((r.conflicts_resolved || []).length) {
     html += `<div class="block"><h3>Conflicts resolved</h3><ul>${r.conflicts_resolved.map((c) => `<li><b>${esc(c.between.join(" vs "))}</b>: ${esc(c.resolution)}</li>`).join("")}</ul></div>`;
   }
+  if (r.counterfactual) {
+    html += `<div class="block"><h3>What would change the answer</h3><p>${esc(r.counterfactual)}</p></div>`;
+  }
   if ((r.alternatives_detail || []).length) {
     html += `<div class="block"><h3>Alternatives considered</h3><table><tr><th>Cause</th><th>Device</th><th>Score</th><th>Why less likely</th></tr>${r.alternatives_detail.map((a) => `<tr><td class="mono">${esc(a.cause)}</td><td class="mono">${esc(a.device)}</td><td class="mono">${a.score.toFixed(2)}</td><td>${esc(a.why_less_likely)}</td></tr>`).join("")}</table></div>`;
   }
@@ -307,6 +310,9 @@ function renderEvidence(res) {
     html += `<div class="block"><h3>How the confidence was calculated</h3><p class="mono">confidence = top score × (0.65 + 0.35 × margin) × (0.5 + 0.5 × data quality) × missing-agent penalty<br>
       = ${c.top_score} × (0.65 + 0.35 × ${c.margin}) × (0.5 + 0.5 × ${c.data_quality}) × ${c.missing_agent_penalty} = <b>${r.confidence}</b> (capped at 0.95)</p>
       <p class="muted">margin = (top − runner-up) / top, with runner-up score ${c.runner_up_score}. ${c.abnormal_readings_behind_top_cause} abnormal readings back the top cause (at least 2 are required to claim a cause).</p></div>`;
+  }
+  if ((r.early_warnings || []).length) {
+    html += `<div class="block"><h3>Early warnings (statistical baseline, not used for the diagnosis)</h3><ul>${r.early_warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>`;
   }
   html += `<div class="block"><h3>Recommended actions</h3><ol>${r.recommended_actions.map((a) => `<li>${esc(a)}</li>`).join("")}</ol></div>`;
   if (r.limitations.length) html += `<div class="block"><h3>Limitations</h3><ul>${r.limitations.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;

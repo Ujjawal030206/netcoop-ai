@@ -31,7 +31,8 @@
       "required": ["metric", "value", "unit", "interpretation", "severity"],
       "properties": {
         "metric":         {"type": "string", "description": "Canonical metric name, e.g. link_utilization_pct (see docs/PROTOCOL.md)."},
-        "value":          {"type": ["number", "string", "boolean"]},
+        "value":          {"type": ["number", "string", "boolean"], "description": "Median of the samples received, in the canonical unit."},
+        "worst":          {"type": ["number", "null"], "description": "Worst sample when several were received; a peak past the threshold is graded at 85% strength."},
         "unit":           {"type": "string", "description": "ms, %, count, dBm, dB, Mbps, degC, state, ratio"},
         "device_id":      {"type": ["string", "null"]},
         "threshold":      {"type": ["number", "null"], "description": "Threshold the value was compared with."},

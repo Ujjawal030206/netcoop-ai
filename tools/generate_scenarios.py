@@ -201,6 +201,16 @@ def organiser_record(fault_type, device=None, ts=None):
     return data
 
 
+def no_topology_congestion():
+    """Hostel congestion with the topology block removed: scope cannot be determined."""
+    hostel = ["HOSTEL_SW_01", "HOSTEL_AP_01", "HOSTEL_AP_02", "HOSTEL_PC_01"]
+    data = batch("no_topology", {"HOSTEL_DIST_SW_01": congestion_core, **{d: downstream_slow for d in hostel}},
+                 statuses={"HOSTEL_DIST_SW_01": "Warning"},
+                 description="Hostel congestion, but no topology supplied: diagnosis per device, scope undetermined.")
+    del data["topology"]
+    return data
+
+
 def interop_messy():
     """Hostel congestion again, but sent by a legacy collector in a different dialect."""
     recs = []
@@ -334,6 +344,12 @@ def main(seed=7):
                   description="Hostel AP shows a borderline signal, but the access switch is saturated and the wired "
                               "PC is slow too: agents must decide between Wi-Fi and congestion."),
             {"status": "diagnosed", "cause": "link_congestion", "device": "HOSTEL_SW_01"}),
+        "monitoring_gap": (batch("monitoring_gap", {}, skip=("DEPT_SW_01",),
+                                 description="DEPT_SW_01 sends no telemetry, but every device below it is healthy: "
+                                             "a monitoring gap, not an outage."),
+                           {"status": "healthy", "cause": "normal"}),
+        "no_topology": (no_topology_congestion(),
+                        {"status": "diagnosed", "cause": "link_congestion", "device": "HOSTEL_DIST_SW_01"}),
         "interop_legacy_mixed": (interop_messy(),
                                  {"status": "diagnosed", "cause": "link_congestion", "device": "HOSTEL_DIST_SW_01"}),
         "organiser_normal": (organiser_record("normal", "SW_CAMPUS_3"), {"status": "healthy", "cause": "normal"}),

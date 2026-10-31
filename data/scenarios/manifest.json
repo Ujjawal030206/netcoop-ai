@@ -58,6 +58,17 @@
     "device": "HOSTEL_SW_01",
     "description": "Hostel AP shows a borderline signal, but the access switch is saturated and the wired PC is slow too: agents must decide between Wi-Fi and congestion."
   },
+  "monitoring_gap.json": {
+    "status": "healthy",
+    "cause": "normal",
+    "description": "DEPT_SW_01 sends no telemetry, but every device below it is healthy: a monitoring gap, not an outage."
+  },
+  "no_topology.json": {
+    "status": "diagnosed",
+    "cause": "link_congestion",
+    "device": "HOSTEL_DIST_SW_01",
+    "description": "Hostel congestion, but no topology supplied: diagnosis per device, scope undetermined."
+  },
   "interop_legacy_mixed.json": {
     "status": "diagnosed",
     "cause": "link_congestion",

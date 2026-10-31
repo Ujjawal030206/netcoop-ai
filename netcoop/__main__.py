@@ -83,11 +83,12 @@ def cmd_diagnose(args):
         print_report(r)
     if args.json:
         Path(args.json).write_text(json.dumps(r, indent=2), encoding="utf-8")
-        print(f"\nreport written to {args.json}")
+        print(f"report written to {args.json}", file=sys.stderr)
     if args.log:
         Path(args.log).write_text(json.dumps(res["messages"], indent=2, default=str), encoding="utf-8")
-        print(f"message log written to {args.log}")
-    print(f"{C['dim']}{len(res['messages'])} messages, {len(res['rejected_messages'])} rejected, {res['elapsed_ms']} ms{C['x']}")
+        print(f"message log written to {args.log}", file=sys.stderr)
+    print(f"{C['dim']}{len(res['messages'])} messages, {len(res['rejected_messages'])} rejected, {res['elapsed_ms']} ms{C['x']}",
+          file=sys.stderr)
     return 0 if r["status"] != "error" else 2
 
 

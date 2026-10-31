@@ -22,11 +22,27 @@ Confidence: 0.80 (high)
 
 | Check | Result |
 |---|---|
-| Bundled scenarios (`python tools/run_scenarios.py`) | **17 / 17** |
+| Bundled scenarios (`python tools/run_scenarios.py`) | **19 / 19** |
 | Every campus scenario regenerated with 30 random seeds (`python tools/stress_test.py`) | **330 / 330** |
 | Random records from the reference telemetry generator, 100 per type | **300 / 300** |
-| Unit, integration and API tests (`pytest`) | **66 passing** |
+| Unit, integration and API tests (`pytest`) | **70 passing** |
 | Time per diagnosis | ~10–40 ms on a laptop, fully offline |
+
+### Does collaboration actually help? (ablation, `python tools/ablation.py`)
+
+Same inputs, three configurations: each specialist agent alone (its own best hypothesis from its own metrics), all agents combined without follow-up questions, and the full system.
+
+| Configuration | Standard scenarios (330) | Deliberately ambiguous scenarios (90) | Ambiguous, unseen seeds (90) |
+|---|---|---|---|
+| Performance agent alone | 45.5 % | 37.8 % | – |
+| Infrastructure agent alone | 54.5 % | 0.0 % | – |
+| Connectivity agent alone | 45.5 % | 33.3 % | – |
+| All agents, no follow-up questions | 100 % (mean confidence 0.80) | 41.1 % | 42.2 % |
+| **Full system (with follow-up questions)** | **100 % (mean confidence 0.87)** | **90.0 %** | **93.3 %** |
+
+* **Combining agents** is what makes the diagnosis possible at all: no single agent sees enough of the network.
+* **Follow-up questions** decide the hard cases. The ambiguous suite (`ambiguous_sets()` in `tools/generate_scenarios.py`) puts readings near the thresholds, so levels alone cannot separate congestion from a WAN problem, or a weak Wi-Fi signal from a busy uplink; the time-series and scope questions can. On the standard suite they do not change the answer but raise confidence (0.80 → 0.87).
+* The ambiguous suite was written before the fixes it motivated (peak-aware grading, testing only loaded devices, comparing with true siblings) and was then re-run on seeds 5000–5029, which were never inspected. The remaining misses are `ambiguous_wan` cases where six samples produce a chance correlation between load and delay.
 
 The diagnosis is deterministic: the same input always gives the same answer. No network connection or API key is needed. An LLM is optional and only rewrites the finished report as a plain-English summary.
 
@@ -134,7 +150,20 @@ The ingestion agent translates every incoming field to one of 21 canonical metri
 
 Also handled: NDJSON with corrupt lines, CSV, records without a device id, stale samples (>15 min older than the newest), future timestamps, unknown schema versions (best effort + warning), nested `{"topology": {"nodes": [...], "edges": [...]}}` or `devices/links` topologies with undirected links oriented by device tier, and a `services` block for DNS/DHCP.
 
-Every change is logged as a transformation or an issue, and a **data quality score** (1.0 down to a floor of 0.3) is computed from the number of guesses, rejections, stale samples and version problems. It feeds into the final confidence, so messy data always produces a more cautious diagnosis.
+Every change is logged as a transformation or an issue, and a **data quality score** is computed (`netcoop/ingest.py`, end of `normalize`). It feeds into the final confidence, so messy data always produces a more cautious diagnosis:
+
+| Start at 1.0, then subtract | Per occurrence | Cap |
+|---|---|---|
+| `schema_version` with an unsupported major version (unparseable version: 0.05) | 0.10 | once |
+| record rejected (not an object, no device id) | 0.10 | 0.30 |
+| unit assumed (bare 0–1 fraction, positive Wi-Fi quality %) | 0.03 | 0.15 |
+| field name matched by similarity only | 0.03 | 0.10 |
+| value out of range, unparseable, or in an incompatible unit | 0.05 | 0.20 |
+| stale sample (> 15 min older than the newest) | 0.05 | 0.15 |
+| record without a usable timestamp | 0.02 | 0.10 |
+| **floor** | | **0.30** |
+
+Example: `interop_legacy_mixed.json` scores 1.0 − 0.10 (record without device id) − 0.15 (12 assumed fractions, capped) − 0.05 (CPU 140 %) = **0.70**. Its legacy `schema_version` 0.9 is supported, so it costs nothing.
 
 ## Evidence correlation and confidence
 
@@ -194,6 +223,58 @@ margin     = (top − runner-up) / top                     capped at 0.95
 
 The margin keeps the system from being confident when two causes score alike; the 0.95 cap reflects that telemetry never proves a cause outright; one abnormal reading is a symptom, not a diagnosis.
 
+**Reading strength** (`knowledge.assess`): below warning → 0; between warning `w` and critical `c` → `0.6 + 0.3 × (v − w) / (c − w)`; at or past critical → `min(1, 0.9 + 0.1 × (v − c) / (2 × |c − w|))`. For metrics where lower is worse (RSSI, SNR) the values are mirrored. With several samples, the median is graded and so is the worst sample; the reading's strength is `max(strength(median), 0.85 × strength(worst))`, so a peak past the threshold counts slightly less than a sustained level.
+
+### Worked example: reproduce one confidence by hand
+
+`python -m netcoop diagnose data/scenarios/conflicting_wifi_vs_congestion.json` reports **link congestion at HOSTEL_SW_01, confidence 0.82**. Every number below comes from that run.
+
+**Step 1: reading strengths** (warning / critical thresholds in brackets)
+
+| Reading | Median | Worst | Strength |
+|---|---|---|---|
+| `link_utilization_pct` HOSTEL_SW_01 (80 / 90) | 83.28 | 96.78 | median 0.6 + 0.3 × 3.28 / 10 = 0.698; worst 0.85 × (0.9 + 0.1 × 6.78 / 20) = 0.794 → **0.794** |
+| `queue_drops` HOSTEL_SW_01 (50 / 150) | 146.5 | 266 | **0.889** |
+| `latency_ms`, best below the switch: HOSTEL_AP_01 (100 / 250) | 200.18 | 242.33 | **0.800** |
+| `jitter_ms`, best below: HOSTEL_AP_01 (30 / 60) | 42.62 | 46.74 | **0.726** |
+| `packet_loss_pct`, best below: HOSTEL_PC_01 (1 / 5) | 1.54 | 2.96 | **0.640** |
+| contradicting: interface errors 2, CRC errors 1, status healthy | | | **0** |
+
+**Step 2: score `link_congestion` on HOSTEL_SW_01**
+
+```
+primary  = 0.5 × max(0.794, 0.889) + 0.5 × mean(0.794, 0.889) = 0.5 × 0.889 + 0.5 × 0.8415 = 0.865
+support  = mean(0.800, 0.726, 0.640)                           = 0.722
+base     = 0.75 × 0.865 + 0.25 × 0.722                          = 0.829
+score    = (0.829 − 0.4 × 0) × (0.75 + 0.25 × 2/2)              = 0.829
++0.05  corroborated by 2 agents (performance, infrastructure)   → 0.879
++0.10  correlate_metrics: latency tracks utilisation, r = 1.00  → 0.979
+```
+
+**Step 3: score the runner-up, `weak_wifi_signal` on HOSTEL_AP_01**
+
+```
+primary strengths: rssi -69.55 dBm → 0.696, snr 35.15 dB → 0 (normal), retransmissions 12.87 % → 0.686
+primary  = 0.5 × 0.696 + 0.5 × mean(0.696, 0, 0.686) = 0.348 + 0.230 = 0.578
+support  = mean(latency 0.800, jitter 0.726, loss 0)          = 0.509
+base     = 0.75 × 0.578 + 0.25 × 0.509                        = 0.561   (no contradiction, coverage 3/3)
++0.05  corroborated by 2 agents                               → 0.611
+−0.15  scope_check: the wired PC on the same switch is slow too → 0.461
+```
+
+**Step 4: confidence**
+
+```
+margin     = (0.979 − 0.461) / 0.979                                   = 0.529
+confidence = 0.979 × (0.65 + 0.35 × 0.529) × (0.5 + 0.5 × 1.0) × 0.85^0 = 0.979 × 0.835 × 1 × 1 = 0.82  → high
+```
+
+Every report carries these inputs in `confidence_method`, and the dashboard's *Evidence & reasoning* tab prints the same calculation for whatever scenario is loaded.
+
+**Early warnings (statistical baseline).** Each specialist also compares every device's newest sample with that device's own recent history (robust z-score: median and MAD of the earlier samples). If a reading jumped by at least 4 robust deviations *and* covered at least half the distance to its warning threshold while still under it, the report lists an early warning, e.g. *"latency_ms on HOSTEL_PC_01 jumped to 70.00 from a typical 9.00 (robust z = 6.1) while still below the warning threshold 100"*. Early warnings never change the diagnosis: with a handful of samples a baseline is noisy, so they are flagged for attention only. Measured false-alarm rate on healthy runs: 0 of 30.
+
+**Counterfactual.** Each hypothesis also says what its conclusion depends on, computed by re-scoring with its strongest defining reading moved just inside the normal range, e.g. *"Had queue_drops on HOSTEL_DIST_SW_01 stayed below its warning threshold (50 count; observed 322.0 count), 'link_congestion' would have scored 0.53 instead of 0.74."*
+
 ## Error handling
 
 | Situation | Behaviour |
@@ -210,7 +291,7 @@ The margin keeps the system from being confident when two causes score alike; th
 
 ## Output
 
-Every run produces a JSON report in the required structure (`incident_id`, `status`, `suspected_root_cause`, `confidence`, `affected_devices`, `supporting_evidence`, `alternative_causes`, `recommended_actions`, `evidence_sources`, `limitations`), extended with `root_cause_id`, `confidence_category`, `fault_domain`, `alternatives_detail`, `conflicts_resolved`, `inter_agent_queries`, `confidence_method`, `data_quality` and a plain-English `summary`, plus a Markdown version and the full message log. `status` is one of `diagnosed`, `healthy`, `insufficient_evidence`, `error`.
+Every run produces a JSON report in the required structure (`incident_id`, `status`, `suspected_root_cause`, `confidence`, `affected_devices`, `supporting_evidence`, `alternative_causes`, `recommended_actions`, `evidence_sources`, `limitations`), extended with `root_cause_id`, `confidence_category`, `fault_domain`, `counterfactual`, `early_warnings`, `alternatives_detail`, `conflicts_resolved`, `inter_agent_queries`, `confidence_method`, `data_quality` and a plain-English `summary`, plus a Markdown version and the full message log. `status` is one of `diagnosed`, `healthy`, `insufficient_evidence`, `error`.
 
 ## Sample data and test scenarios
 
@@ -226,6 +307,8 @@ Every run produces a JSON report in the required structure (`incident_id`, `stat
 | `device_overload.json` | core CPU and memory exhausted, interfaces clean | `device_overload` |
 | `wan_latency.json` | latency spike upstream, no local congestion | `path_latency` |
 | `upstream_outage.json` | distribution switch silent, everything below unreachable | `upstream_device_outage` |
+| `monitoring_gap.json` | department switch silent, everything below it healthy | healthy, "restore monitoring" action, lower confidence |
+| `no_topology.json` | hostel congestion with the topology removed | `link_congestion`, low confidence, scope stated as unknown |
 | `conflicting_wifi_vs_congestion.json` | borderline AP signal vs a saturated access switch | `link_congestion` after follow-up questions |
 | `interop_legacy_mixed.json` | legacy dialect (camelCase, seconds, fractions, epoch times, unit strings), a record without id, an out-of-range value, one valid legacy 0.9 agent message, one malformed message | `link_congestion`, 1 message rejected |
 | `organiser_normal.json`, `organiser_latency_spike.json`, `organiser_hardware_failure.json` | single records in the reference generator format | healthy, `path_latency`, `hardware_failure` |
@@ -273,7 +356,8 @@ netcoop/
 schemas/message.schema.json
 config/thresholds.json, config/fault_signatures.json
 data/scenarios/     sample inputs + manifest.json
-tools/              generate_scenarios.py, run_scenarios.py, stress_test.py
+tools/              generate_scenarios.py, run_scenarios.py, stress_test.py, ablation.py,
+                    build_protocol_doc.py
 static/             dashboard
 server.py           FastAPI app
 tests/              pytest suite
@@ -285,4 +369,5 @@ docs/PROTOCOL.md    message and field reference
 * Thresholds are generic campus values and should be tuned per network.
 * Load–latency correlation needs at least four samples per device; single snapshots are diagnosed from levels only (and the report says so).
 * Scope analysis depends on topology; without it the diagnosis is per device.
+* With only a few samples, a chance correlation between load and delay can mislead the congestion-vs-WAN question (the remaining misses in the ambiguous suite).
 * Evaluated on synthetic telemetry. The system only recommends actions and never changes network devices.
