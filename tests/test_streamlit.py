@@ -27,12 +27,18 @@ def test_every_scenario_renders(name):
 def test_follow_up_switch_changes_the_ambiguity_result():
     at = app().run()
     at.selectbox(key="scenario").set_value("conflicting_wifi_vs_congestion.json").run()
-    on = [m.value for m in at.metric]
+    on = kpis(at)
     at.toggle(key="follow_up").set_value(False).run()
     assert not at.exception
-    off = [m.value for m in at.metric]
-    assert on[3] == "2" and off[3] == "0"          # follow-up questions asked: 2 -> 0
-    assert on[0] != off[0]                         # confidence changes without them
+    off = kpis(at)
+    assert on["followups"] == "2" and off["followups"] == "0"    # follow-up questions asked: 2 -> 0
+    assert on["confidence"] != off["confidence"]                  # confidence changes without them
+
+
+def kpis(at):
+    import re
+    block = next(m.value for m in at.markdown if 'class="kpis"' in m.value)
+    return dict(re.findall(r'data-(\w+)="([^"]*)"', block))
 
 
 def test_crash_and_paste_paths():
