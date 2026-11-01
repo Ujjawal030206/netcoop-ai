@@ -4,6 +4,8 @@
 
 Specialist agents each examine one part of a campus network (traffic performance, device health, topology / Wi-Fi / services), exchange structured findings over a validated message bus, question each other when their explanations compete, and agree on one explainable diagnosis: the probable root cause, the evidence, the affected devices, the alternatives, a confidence score with a published formula, and recommended actions. When the evidence is too thin, the system says so instead of guessing.
 
+**Live demo:** https://netcoop-ai-axx3nnrwlbrmqefj4dd3sn.streamlit.app/ (free hosting: the first visit after a quiet period can take about 30 seconds to wake up; everything also runs locally, see Quick start).
+
 ```
 python -m netcoop diagnose data/scenarios/conflicting_wifi_vs_congestion.json --trace
 ```
